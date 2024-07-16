@@ -16,7 +16,7 @@
 #include <iostream>
 
 
-#define  LLOG_ERROR std::cout 
+#define  LLOG_ERROR std::cout
 
 constexpr int ObjectPoolCountDefault = 8;
 
@@ -36,8 +36,8 @@ class ObjectPool
         {
         }
 
-        bool            Init()                              { return Init({});  }
-        bool            Init(const ParamList  &prmList);
+        template <typename ... Args>
+        bool            Init(const Args& ... args);
         void            Release();
 
         TPoolObject *   ObjectAcquire();
@@ -54,7 +54,6 @@ class ObjectPool
        TPoolObject *    ReserveSlot();
 
         size_t                      _size = ObjectPoolCountDefault;
-        ParamList                   _paramList;
 
         std::vector<TPoolObject>    _objContainer;
         std::set<TPoolObject*  >    _objIndexFree;
@@ -68,17 +67,15 @@ class ObjectPool
 
 
 template <typename TPoolObject>
-bool ObjectPool<TPoolObject>::Init(const ParamList  &prmList)
+template <typename ... Args>
+bool ObjectPool<TPoolObject>::Init(const Args& ... args)
 {
     bool rv = true;
-
     Release();
-
-    _paramList = prmList;
 
     for (auto &item : _objContainer)
     {
-        if (true != item.Init(_paramList))
+        if (true != item.Init(args ...))
         {
             LLOG_ERROR << "Unable to initialize PoolObject";
             rv = false;

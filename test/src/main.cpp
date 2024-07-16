@@ -3,12 +3,12 @@
 #include <gtest/gtest.h>
 
 
-TEST(DummyTest, DummyTest)
+TEST(ObjectPool, Basic)
 {
     class PoolObj
     {
         public:
-        bool Init(const ParamList &)
+        bool Init()
         {
             _val = 0;
             return true;
@@ -55,6 +55,53 @@ TEST(DummyTest, DummyTest)
 
     pool.Release();
 }
+
+
+TEST(ObjectPool, Init)
+{
+    class PoolObj
+    {
+        public:
+        bool Init(int a1, const char *a2)
+        {
+            _a1 = a1;
+            _a2 = a2;
+            return true;
+        }
+        void Release()
+        {
+            _a1 = -1;
+            _a2 = nullptr;
+        }
+
+        int         _a1 = -1;
+        const char *_a2 = nullptr;
+    };
+
+
+    ObjectPool<PoolObj> pool(2);
+    const char *a2 = "Hello";
+    pool.Init(9, a2);
+
+    PoolObj *p1 = pool.ObjectAcquire();
+    PoolObj *p2 = pool.ObjectAcquire();
+
+    EXPECT_NE   (nullptr,   p1);
+    EXPECT_EQ   (9,         p1->_a1);
+    EXPECT_EQ   (a2,        p1->_a2);
+    EXPECT_STREQ(a2,        p1->_a2);
+
+    EXPECT_NE   (nullptr,   p2);
+    EXPECT_EQ   (9,         p2->_a1);
+    EXPECT_EQ   (a2,        p2->_a2);
+    EXPECT_STREQ(a2,        p2->_a2);
+
+    pool.ObjectRelease(p2);
+    pool.ObjectRelease(p1);
+    pool.Release();
+}
+
+
 
 
 int main(int argc, char** argv)
